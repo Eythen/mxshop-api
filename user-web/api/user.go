@@ -82,9 +82,9 @@ func GetUserList(c *gin.Context) {
 		)
 	}
 
-	claims, _ := c.Get("claims")
-	currentUser := claims.(*models.CustomClaims)
-	zap.S().Infof("访问用户：%d", currentUser.ID)
+	//claims, _ := c.Get("claims")
+	//currentUser := claims.(*models.CustomClaims)
+	//zap.S().Infof("访问用户：%d", currentUser.ID)
 
 	//生成grpc的client并调用接口
 	userSrvClient := proto.NewUserClient(userConn)
@@ -132,6 +132,13 @@ func PassWordLogin(c *gin.Context) {
 	passwordLoginForm := forms.PassWordLoginForm{}
 	if err := c.ShouldBindJSON(&passwordLoginForm); err != nil {
 		HandleValidatorError(c, err)
+		return
+	}
+
+	if !store.Verify(passwordLoginForm.CaptchaId, passwordLoginForm.Captcha, true) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"msg": "验证码错误",
+		})
 		return
 	}
 
