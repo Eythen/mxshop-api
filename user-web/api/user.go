@@ -82,6 +82,10 @@ func GetUserList(c *gin.Context) {
 		)
 	}
 
+	claims, _ := c.Get("claims")
+	currentUser := claims.(*models.CustomClaims)
+	zap.S().Infof("访问用户：%d", currentUser.ID)
+
 	//生成grpc的client并调用接口
 	userSrvClient := proto.NewUserClient(userConn)
 
