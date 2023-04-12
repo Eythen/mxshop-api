@@ -7,3 +7,12 @@ user_srv:
 
 jwt:
     key: "5$!UEmvB#nRB@Iwab#Sy!ZofKEOGLRtE"
+
+sms:
+    key: ""
+    secrect: ""
+    expire: 3000
+
+redis:
+    host: "127.0.0.1"
+    port: 6379
