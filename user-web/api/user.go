@@ -30,12 +30,21 @@ func removeTopStruct(fileds map[string]string) map[string]string {
 	}
 	return rsp
 }
+
 func HandleValidatorError(c *gin.Context, err error) {
+	fmt.Println(err)
 	errs, ok := err.(validator.ValidationErrors)
+	fmt.Println(ok)
+
+	for _, err := range errs {
+		fmt.Println(err)
+	}
+
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
 			"msg": err.Error(),
 		})
+		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{
 		"error": removeTopStruct(errs.Translate(global.Trans)),
