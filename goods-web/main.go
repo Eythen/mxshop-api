@@ -9,6 +9,9 @@ import (
 	"mxshop-api/goods-web/initialize"
 	"mxshop-api/goods-web/utils"
 	"mxshop-api/goods-web/utils/register/consul"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -50,7 +53,19 @@ func main() {
 
 	zap.S().Infof("启动服务器，端口：%d", port)
 
-	if err := Router.Run(fmt.Sprintf(":%d", port)); err != nil {
-		zap.S().Panic("启动失败：", err.Error())
+	go func() {
+		if err := Router.Run(fmt.Sprintf(":%d", port)); err != nil {
+			zap.S().Panic("启动失败：", err.Error())
+		}
+	}()
+
+	//接收终止信号
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	if err = registerClient.DeRegister(serviceId); err != nil {
+		zap.S().Panic("注销服务失败：", err.Error())
+	} else {
+		zap.S().Panic("注销服务成功")
 	}
 }
