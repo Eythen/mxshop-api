@@ -87,8 +87,8 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	if err = registerClient.DeRegister(serviceId); err != nil {
-		zap.S().Panic("注销服务失败：", err.Error())
+		zap.S().Info("注销服务失败：", err.Error())
 	} else {
-		zap.S().Panic("注销服务成功")
+		zap.S().Info("注销服务成功")
 	}
 }
