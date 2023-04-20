@@ -2,12 +2,12 @@ package goods
 
 import (
 	"context"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"mxshop-api/goods-web/forms"
 	"mxshop-api/goods-web/global"
 	"mxshop-api/goods-web/proto"
 	"net/http"
@@ -24,13 +24,7 @@ func removeTopStruct(fileds map[string]string) map[string]string {
 }
 
 func HandleValidatorError(c *gin.Context, err error) {
-	fmt.Println(err)
 	errs, ok := err.(validator.ValidationErrors)
-	fmt.Println(ok)
-
-	for _, err := range errs {
-		fmt.Println(err)
-	}
 
 	if !ok {
 		c.JSON(http.StatusOK, gin.H{
@@ -59,7 +53,7 @@ func HandleGrpcErrorToHttp(err error, c *gin.Context) {
 				})
 			case codes.InvalidArgument:
 				c.JSON(http.StatusBadRequest, gin.H{
-					"msg": "参数错误",
+					"msg": e.Message(),
 				})
 			case codes.Unavailable:
 				c.JSON(http.StatusInternalServerError, gin.H{
@@ -160,4 +154,34 @@ func List(g *gin.Context) {
 	reMap["data"] = goodsList
 
 	g.JSON(http.StatusOK, reMap)
+}
+
+func New(ctx *gin.Context) {
+	goodsForm := forms.GoodsForm{}
+	if err := ctx.ShouldBindJSON(&goodsForm); err != nil {
+		HandleValidatorError(ctx, err)
+		return
+	}
+
+	rsp, err := global.GoodsSrvClient.CreateGoods(context.Background(), &proto.CreateGoodsInfo{
+		Name:            goodsForm.Name,
+		GoodsSn:         goodsForm.GoodsSn,
+		Stocks:          goodsForm.Stocks,
+		MarketPrice:     goodsForm.MarketPrice,
+		ShopPrice:       goodsForm.ShopPrice,
+		GoodsBrief:      goodsForm.GoodsBrief,
+		ShipFree:        *goodsForm.ShipFree,
+		Images:          goodsForm.Images,
+		DescImages:      goodsForm.DescImages,
+		GoodsFrontImage: goodsForm.FrontImage,
+		CategoryId:      goodsForm.CategoryId,
+		BrandId:         goodsForm.Brand,
+	})
+	if err != nil {
+		HandleGrpcErrorToHttp(err, ctx)
+		return
+	}
+
+	//todo 商品库存 - 分布式事务
+	ctx.JSON(http.StatusOK, rsp)
 }
